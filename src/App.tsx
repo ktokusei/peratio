@@ -46,15 +46,13 @@ export default function App() {
     setIsAdding(true)
     setAddError(null)
 
-    // Validate ticker exists via Edge Function before inserting
-    const data = await fetchStockData(symbol, SUPABASE_URL, SUPABASE_ANON_KEY)
-    if (data.error) {
-      setAddError(data.error === 'Ticker not found' ? 'Ticker not found' : 'Failed to fetch data')
-      setIsAdding(false)
-      return
-    }
-
     try {
+      const data = await fetchStockData(symbol, SUPABASE_URL, SUPABASE_ANON_KEY)
+      if (data.error) {
+        setAddError(data.error === 'Ticker not found' ? 'Ticker not found' : 'Failed to fetch data')
+        return
+      }
+
       await addTicker(symbol)
       setStocks((prev) => [...prev, data])
     } catch {
