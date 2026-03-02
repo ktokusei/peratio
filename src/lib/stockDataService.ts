@@ -1,4 +1,4 @@
-import { StockData } from '../types'
+import type { StockData } from '../types'
 
 export async function fetchStockData(
   symbol: string,
@@ -40,5 +40,5 @@ export async function fetchStockData(
     }
   }
 
-  return data as StockData
+  return data as unknown as StockData
 }

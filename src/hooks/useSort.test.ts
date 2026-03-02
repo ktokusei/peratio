@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { useSort } from './useSort'
-import { StockData } from '../types'
+import type { StockData } from '../types'
 
 const stocks: StockData[] = [
   { symbol: 'MSFT', name: 'Microsoft', price: 415.20, eps: 12.17, pe: 34.1, marketCap: 3080000000000 },

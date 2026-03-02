@@ -1,7 +1,4 @@
-import { StockData } from '../types'
-
-type SortKey = keyof StockData
-type SortDir = 'asc' | 'desc'
+import type { StockData, SortKey, SortDir } from '../types'
 
 function formatPrice(value: number | null): string {
   if (value === null) return '—'

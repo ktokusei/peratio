@@ -7,3 +7,7 @@ export interface StockData {
   marketCap: number | null
   error?: string
 }
+
+export type SortableKey = Exclude<keyof StockData, 'error'>
+export type SortKey = SortableKey
+export type SortDir = 'asc' | 'desc'

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { StockTable } from './StockTable'
-import { StockData } from '../types'
+import type { StockData } from '../types'
 
 const mockStocks: StockData[] = [
   { symbol: 'AAPL', name: 'Apple Inc.', price: 189.30, eps: 6.67, pe: 28.4, marketCap: 2940000000000 },

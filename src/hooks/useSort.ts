@@ -1,8 +1,5 @@
 import { useState, useMemo } from 'react'
-import { StockData } from '../types'
-
-type SortKey = keyof StockData
-type SortDir = 'asc' | 'desc'
+import type { StockData, SortKey, SortDir } from '../types'
 
 export function useSort(data: StockData[]) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null)
