@@ -23,8 +23,14 @@ describe('fetchStockData', () => {
     })
 
     const result = await fetchStockData('AAPL', 'https://project.supabase.co', 'anon-key')
-    expect(result.name).toBe('Apple Inc.')
-    expect(result.pe).toBe(28.4)
+    expect(result).toEqual({
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      price: 189.3,
+      eps: 6.67,
+      pe: 28.4,
+      marketCap: 2940000000000,
+    })
   })
 
   it('returns an error object for an unknown ticker', async () => {
@@ -35,7 +41,15 @@ describe('fetchStockData', () => {
     })
 
     const result = await fetchStockData('FAKE', 'https://project.supabase.co', 'anon-key')
-    expect(result.error).toBe('Ticker not found')
+    expect(result).toEqual({
+      symbol: 'FAKE',
+      name: '',
+      price: null,
+      eps: null,
+      pe: null,
+      marketCap: null,
+      error: 'Ticker not found',
+    })
   })
 
   it('passes through negative EPS without modification', async () => {
@@ -54,5 +68,11 @@ describe('fetchStockData', () => {
     const result = await fetchStockData('LYFT', 'https://project.supabase.co', 'anon-key')
     expect(result.eps).toBe(-0.83)
     expect(result.pe).toBeNull()
+  })
+
+  it('returns an error object when fetch throws a network error', async () => {
+    mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
+    const result = await fetchStockData('AAPL', 'https://project.supabase.co', 'anon-key')
+    expect(result.error).toBe('Failed to fetch data')
   })
 })

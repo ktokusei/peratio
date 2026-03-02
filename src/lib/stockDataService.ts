@@ -5,15 +5,28 @@ export async function fetchStockData(
   supabaseUrl: string,
   supabaseAnonKey: string
 ): Promise<StockData> {
-  const url = `${supabaseUrl}/functions/v1/get-stock-data?symbol=${symbol}`
+  const url = `${supabaseUrl}/functions/v1/get-stock-data?symbol=${encodeURIComponent(symbol)}`
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${supabaseAnonKey}`,
-    },
-  })
-
-  const data = await response.json()
+  let response: Response
+  let data: Record<string, unknown>
+  try {
+    response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+    })
+    data = await response.json()
+  } catch {
+    return {
+      symbol,
+      name: '',
+      price: null,
+      eps: null,
+      pe: null,
+      marketCap: null,
+      error: 'Failed to fetch data',
+    }
+  }
 
   if (!response.ok) {
     return {
@@ -23,7 +36,7 @@ export async function fetchStockData(
       eps: null,
       pe: null,
       marketCap: null,
-      error: data.error ?? 'Failed to fetch data',
+      error: (data.error as string) ?? 'Failed to fetch data',
     }
   }
 
