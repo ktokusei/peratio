@@ -50,7 +50,15 @@ describe('addTicker', () => {
     mockFrom.mockReturnValue({ insert: insertMock })
 
     await addTicker('aapl')
+    expect(mockFrom).toHaveBeenCalledWith('tickers')
     expect(insertMock).toHaveBeenCalledWith([{ symbol: 'AAPL' }])
+  })
+
+  it('throws on supabase error', async () => {
+    const insertMock = vi.fn().mockResolvedValue({ error: { message: 'Insert failed' } })
+    mockFrom.mockReturnValue({ insert: insertMock })
+
+    await expect(addTicker('AAPL')).rejects.toThrow('Insert failed')
   })
 })
 
@@ -61,6 +69,15 @@ describe('removeTicker', () => {
     mockFrom.mockReturnValue({ delete: deleteMock })
 
     await removeTicker('AAPL')
+    expect(mockFrom).toHaveBeenCalledWith('tickers')
     expect(eqMock).toHaveBeenCalledWith('symbol', 'AAPL')
+  })
+
+  it('throws on supabase error', async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: { message: 'Delete failed' } })
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock })
+    mockFrom.mockReturnValue({ delete: deleteMock })
+
+    await expect(removeTicker('AAPL')).rejects.toThrow('Delete failed')
   })
 })
