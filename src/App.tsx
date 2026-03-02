@@ -1,35 +1,121 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState, useCallback } from 'react'
+import { StockTable } from './components/StockTable'
+import { AddTickerForm } from './components/AddTickerForm'
+import { getTickers, addTicker, removeTicker } from './lib/tickerService'
+import { fetchStockData } from './lib/stockDataService'
+import { useSort } from './hooks/useSort'
+import type { StockData } from './types'
 
-function App() {
-  const [count, setCount] = useState(0)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+export default function App() {
+  const [stocks, setStocks] = useState<StockData[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [addError, setAddError] = useState<string | null>(null)
+  const [isAdding, setIsAdding] = useState(false)
+  const { sorted, sortKey, sortDir, toggleSort } = useSort(stocks)
+
+  const loadAllStocks = useCallback(async () => {
+    setLoadError(null)
+    try {
+      const symbols = await getTickers()
+      // Show placeholders immediately while data loads
+      setStocks(symbols.map((symbol) => ({
+        symbol,
+        name: '',
+        price: null,
+        eps: null,
+        pe: null,
+        marketCap: null,
+      })))
+      const results = await Promise.all(
+        symbols.map((symbol) => fetchStockData(symbol, SUPABASE_URL, SUPABASE_ANON_KEY))
+      )
+      setStocks(results)
+    } catch {
+      setLoadError('Unable to load ticker list. Please refresh the page.')
+    }
+  }, [])
+
+  useEffect(() => {
+    loadAllStocks()
+  }, [loadAllStocks])
+
+  async function handleAdd(symbol: string) {
+    setIsAdding(true)
+    setAddError(null)
+
+    // Validate ticker exists via Edge Function before inserting
+    const data = await fetchStockData(symbol, SUPABASE_URL, SUPABASE_ANON_KEY)
+    if (data.error) {
+      setAddError(data.error === 'Ticker not found' ? 'Ticker not found' : 'Failed to fetch data')
+      setIsAdding(false)
+      return
+    }
+
+    try {
+      await addTicker(symbol)
+      setStocks((prev) => [...prev, data])
+    } catch {
+      setAddError('Failed to add ticker. Please try again.')
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  async function handleRemove(symbol: string) {
+    // Optimistic update: remove immediately from UI
+    setStocks((prev) => prev.filter((s) => s.symbol !== symbol))
+    try {
+      await removeTicker(symbol)
+    } catch {
+      // Revert if the delete failed
+      loadAllStocks()
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <header className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Peratio</h1>
+          <p className="text-gray-500 text-sm mt-1">P/E Ratio Tracker</p>
+        </header>
+
+        {loadError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            {loadError}
+          </div>
+        )}
+
+        <div className="mb-6">
+          <AddTickerForm
+            onAdd={handleAdd}
+            existingTickers={stocks.map((s) => s.symbol)}
+            isLoading={isAdding}
+          />
+          {addError && (
+            <p className="mt-2 text-red-500 text-sm">{addError}</p>
+          )}
+        </div>
+
+        {stocks.length === 0 && !loadError ? (
+          <p className="text-gray-400 text-sm">
+            No companies added yet. Enter a ticker symbol above to get started.
+          </p>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <StockTable
+              stocks={sorted}
+              onRemove={handleRemove}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+            />
+          </div>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
-
-export default App
