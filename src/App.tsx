@@ -74,15 +74,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <header className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Peratio</h1>
-          <p className="text-gray-500 text-sm mt-1">P/E Ratio Tracker</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Peratio</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">P/E Ratio Tracker</p>
         </header>
 
         {loadError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-sm">
             {loadError}
           </div>
         )}
@@ -94,16 +94,16 @@ export default function App() {
             isLoading={isAdding}
           />
           {addError && (
-            <p className="mt-2 text-red-500 text-sm">{addError}</p>
+            <p className="mt-2 text-red-500 dark:text-red-400 text-sm">{addError}</p>
           )}
         </div>
 
         {stocks.length === 0 && !loadError ? (
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 dark:text-gray-500 text-sm">
             No companies added yet. Enter a ticker symbol above to get started.
           </p>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
             <StockTable
               stocks={sorted}
               onRemove={handleRemove}

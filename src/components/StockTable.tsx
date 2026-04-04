@@ -36,13 +36,13 @@ function SortHeader({
   const isActive = sortKey === column
   return (
     <th
-      className={`px-4 py-3 font-semibold text-gray-600 cursor-pointer select-none hover:text-gray-900 ${align === 'right' ? 'text-right' : ''}`}
+      className={`px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 cursor-pointer select-none hover:text-gray-900 dark:hover:text-gray-100 ${align === 'right' ? 'text-right' : ''}`}
       onClick={() => onSort(column)}
     >
       {label}{' '}
       {isActive
         ? sortDir === 'asc' ? '↑' : '↓'
-        : <span className="text-gray-300">↕</span>}
+        : <span className="text-gray-300 dark:text-gray-600">↕</span>}
     </th>
   )
 }
@@ -60,7 +60,7 @@ export function StockTable({ stocks, onRemove, sortKey, sortDir, onSort }: Stock
     <div className="overflow-x-auto">
       <table className="w-full text-sm text-left border-collapse">
         <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
+          <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
             <SortHeader label="Ticker" column="symbol" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
             <SortHeader label="Company" column="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
             <SortHeader label="P/E" column="pe" sortKey={sortKey} sortDir={sortDir} onSort={onSort} align="right" />
@@ -72,20 +72,20 @@ export function StockTable({ stocks, onRemove, sortKey, sortDir, onSort }: Stock
         </thead>
         <tbody>
           {stocks.map((stock) => (
-            <tr key={stock.symbol} className="border-b border-gray-100 hover:bg-gray-50">
-              <td className="px-4 py-3 font-mono font-semibold">{stock.symbol}</td>
-              <td className="px-4 py-3 text-gray-700">{stock.name || '—'}</td>
-              <td className="px-4 py-3 text-right">{formatPE(stock.pe)}</td>
-              <td className="px-4 py-3 text-right">{formatPrice(stock.price)}</td>
-              <td className={`px-4 py-3 text-right ${stock.eps !== null && stock.eps < 0 ? 'text-red-600 font-medium' : ''}`}>
+            <tr key={stock.symbol} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+              <td className="px-4 py-3 font-mono font-semibold dark:text-gray-100">{stock.symbol}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{stock.name || '—'}</td>
+              <td className="px-4 py-3 text-right dark:text-gray-300">{formatPE(stock.pe)}</td>
+              <td className="px-4 py-3 text-right dark:text-gray-300">{formatPrice(stock.price)}</td>
+              <td className={`px-4 py-3 text-right ${stock.eps !== null && stock.eps < 0 ? 'text-red-600 dark:text-red-400 font-medium' : 'dark:text-gray-300'}`}>
                 {stock.eps !== null ? formatPrice(stock.eps) : '—'}
               </td>
-              <td className="px-4 py-3 text-right">{formatMarketCap(stock.marketCap)}</td>
+              <td className="px-4 py-3 text-right dark:text-gray-300">{formatMarketCap(stock.marketCap)}</td>
               <td className="px-4 py-3 text-right">
                 <button
                   onClick={() => onRemove(stock.symbol)}
                   aria-label={`Remove ${stock.symbol}`}
-                  className="text-gray-300 hover:text-red-500 transition-colors text-base"
+                  className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors text-base"
                 >
                   ✕
                 </button>

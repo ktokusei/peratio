@@ -37,7 +37,7 @@ export function AddTickerForm({ onAdd, existingTickers, isLoading }: AddTickerFo
           }}
           placeholder="e.g. AAPL"
           maxLength={10}
-          className="border border-gray-300 rounded px-3 py-2 text-sm w-40 uppercase focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm w-40 uppercase focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
         {error && <span className="text-red-500 text-xs">{error}</span>}
       </div>
