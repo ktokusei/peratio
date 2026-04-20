@@ -1,10 +1,13 @@
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const CACHE_TTL_MS = 15 * 60 * 1000 // 15 minutes
+
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -27,6 +30,29 @@ Deno.serve(async (req: Request) => {
     )
   }
 
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  // Check cache
+  const { data: cached } = await supabase
+    .from('stock_cache')
+    .select('data, fetched_at')
+    .eq('symbol', symbol)
+    .single()
+
+  if (cached) {
+    const age = Date.now() - new Date(cached.fetched_at).getTime()
+    if (age < CACHE_TTL_MS) {
+      return new Response(JSON.stringify(cached.data), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
+  // Fetch fresh from Finnhub
   const base = 'https://finnhub.io/api/v1'
   const encodedSymbol = encodeURIComponent(symbol)
 
@@ -37,7 +63,6 @@ Deno.serve(async (req: Request) => {
       fetch(`${base}/stock/metric?symbol=${encodedSymbol}&metric=all&token=${apiKey}`),
     ])
 
-    // Check for Finnhub API errors (rate limit, auth, etc.)
     if (!quoteRes.ok || !profileRes.ok || !metricsRes.ok) {
       const status = [quoteRes, profileRes, metricsRes].find(r => !r.ok)!.status
       const errorMsg = status === 429
@@ -55,7 +80,6 @@ Deno.serve(async (req: Request) => {
       metricsRes.json(),
     ])
 
-    // Finnhub returns {} for unknown tickers on profile2
     if (!profile.name) {
       return new Response(
         JSON.stringify({ error: 'Ticker not found' }),
@@ -64,20 +88,26 @@ Deno.serve(async (req: Request) => {
     }
 
     const metrics = metricsData.metric ?? {}
+    const result = {
+      symbol,
+      name: profile.name,
+      price: quote.c ?? null,
+      eps: metrics.epsTTM ?? null,
+      pe: metrics.peBasicExclExtraTTM ?? null,
+      marketCap: profile.marketCapitalization
+        ? profile.marketCapitalization * 1_000_000
+        : null,
+    }
 
-    return new Response(
-      JSON.stringify({
-        symbol,
-        name: profile.name,
-        price: quote.c ?? null,
-        eps: metrics.epsTTM ?? null,
-        pe: metrics.peBasicExclExtraTTM ?? null,
-        marketCap: profile.marketCapitalization
-          ? profile.marketCapitalization * 1_000_000
-          : null,
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    // Upsert to cache
+    await supabase
+      .from('stock_cache')
+      .upsert({ symbol, data: result, fetched_at: new Date().toISOString() })
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   } catch (err) {
     console.error('[get-stock-data] upstream fetch failed:', err)
     return new Response(
